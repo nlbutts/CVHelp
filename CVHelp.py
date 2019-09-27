@@ -42,7 +42,7 @@ class CVHelp():
         return img
 
 
-    def display(self, img, title = 'img', delay = 1):
+    def display(self, img, title = 'img', delay = -1):
         """Helper function to display. It will display an image and resize it
         to keep it below a certain self.max_width and height.
         Keyword arguments:
@@ -99,3 +99,61 @@ class CVHelp():
                 y += 1
 
         return new_img
+
+    def generate_2dhist(self, image, channels=[0, 1], hist_scale = 10, Mask=None, histSize=[180, 256], ranges=[0,180,0,256]):   
+        """Helper function to generate a 2D histogram that can be displayed
+        Keyword arguments:
+        image -- the image to plot
+        channels -- which channels to plot
+        Mask -- Mask to use for the histogram
+        histSize -- The number of bins for each channel
+        ranges -- The min and max range for each channel        
+        """        
+        hsv_map = np.zeros((histSize[0], histSize[1], 3), np.uint8)
+        h, s = np.indices(hsv_map.shape[:2])
+        hsv_map[:,:,0] = h
+        hsv_map[:,:,1] = s
+        hsv_map[:,:,2] = 255
+        hsv_map = cv2.cvtColor(hsv_map, cv2.COLOR_HSV2BGR)
+
+        #dark = hsv[...,2] < 32
+        #hsv[dark] = 0 
+        hist = cv2.calcHist(image, channels, None, histSize, ranges)
+        hist = np.clip(hist*0.005*hist_scale, 0, 1)
+        vis = hsv_map*hist[:,:,np.newaxis]
+        vis = vis.astype('uint8')
+        return vis
+
+    def generate_backproj_mask(self, image_to_mask, image_to_generate_mask):
+        """This function takes an image_to_generate_mask, uses it to generate
+        an HSV mask that gets applied to image_to_mask.
+        # calculating object histogram
+
+        Keyword arguments:
+        image_to_mask -- the image to apply the back project mask to
+        image_to_generate_mask -- the image to use as the HS back project mask
+        """
+        hsvt = cv2.cvtColor(image_to_mask, cv2.COLOR_BGR2HSV)
+        roi  = cv2.cvtColor(image_to_generate_mask, cv2.COLOR_BGR2HSV)
+
+        # Generate histograms
+        #hist_target = cv2.calcHist([hsvt], [0, 1], None, [180, 256], [0, 180, 0, 256])
+        hist_roi    = cv2.calcHist([roi],  [0, 1], None, [180, 256], [0, 180, 0, 256])
+
+
+        # normalize histogram and apply backprojection
+        cv2.normalize(hist_roi,hist_roi,0,255,cv2.NORM_MINMAX)
+        dst = cv2.calcBackProject([hsvt],[0,1],hist_roi,[0,180,0,256],100)
+        cv2.imwrite('dst.bmp', dst)
+        # Now convolute with circular disc
+        disc = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
+        cv2.filter2D(dst,-1,disc,dst)
+        # threshold and binary AND
+        ret,thresh = cv2.threshold(dst,50,255,0)
+        cv2.imwrite('thresh.bmp', thresh)
+        thresh = cv2.merge((thresh,thresh,thresh))
+        cv2.imwrite('merge.bmp', thresh)
+        res = cv2.bitwise_and(image_to_mask,thresh)
+        cv2.imwrite('res.bmp', res)
+        #res = np.vstack((image_to_mask, thresh, res))
+        return image_to_mask, thresh, ret
