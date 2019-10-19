@@ -41,8 +41,7 @@ class CVHelp():
 
         return img
 
-
-    def display(self, img, title = 'img', delay = -1):
+    def display(self, img, title = 'img', delay = -1, clear_windows = False):
         """Helper function to display. It will display an image and resize it
         to keep it below a certain self.max_width and height.
         Keyword arguments:
@@ -50,9 +49,14 @@ class CVHelp():
         title -- the title for the window
         delay -- how long to wait for a key
         """
+        if clear_windows:
+            cv.destoryAllWindows()
         img = self.resize(img, self.max_width, self.max_height)
         cv.imshow(title, img)
-        cv.waitKey(delay)
+        key = ''
+        while key != ord('q'):
+            key = cv.waitKey(delay)
+
 
     def display_channels(self, img):
         """Helper function to display the separate color channels
