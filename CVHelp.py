@@ -53,10 +53,13 @@ class CVHelp():
             cv.destoryAllWindows()
         img = self.resize(img, self.max_width, self.max_height)
         cv.imshow(title, img)
-        key = ''
-        while key != ord('q'):
+        if delay == -1:
+            key = ''
+            while key != ord('q'):
+                key = cv.waitKey(delay)
+        else:
             key = cv.waitKey(delay)
-
+        return key
 
     def display_channels(self, img):
         """Helper function to display the separate color channels
