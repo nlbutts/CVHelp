@@ -41,16 +41,15 @@ class CVHelp():
 
         return img
 
-    def display(self, img, title = 'img', delay = -1, clear_windows = False):
+    def display(self, img, title = 'img', delay = -1, clear = False):
         """Helper function to display. It will display an image and resize it
         to keep it below a certain self.max_width and height.
         Keyword arguments:
         img -- the image to display
         title -- the title for the window
         delay -- how long to wait for a key
+        clear -- clear the window when we exit the display
         """
-        if clear_windows:
-            cv.destoryAllWindows()
         img = self.resize(img, self.max_width, self.max_height)
         cv.imshow(title, img)
         if delay == -1:
@@ -59,6 +58,10 @@ class CVHelp():
                 key = cv.waitKey(delay)
         else:
             key = cv.waitKey(delay)
+
+        if clear:
+            cv.destroyWindow(title)
+
         return key
 
     def display_channels(self, img):
