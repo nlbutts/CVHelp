@@ -43,7 +43,7 @@ for root, dirs, files in os.walk(args.directory):
         if file.lower().endswith(image_extensions):
             root_path = root[plen::]
             new_dir = poutput + root_path
-            new_file = new_dir + '/' + file.split('.')[0] + '.jpg'
+            new_file = new_dir + '/' + file.split('.')[0] + '.png'
             img_file = root + '/' + file
             print(f'Processing {img_file} Saving to {new_file}')
             img = Image.open(img_file)
