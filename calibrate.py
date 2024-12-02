@@ -65,7 +65,7 @@ class BlobDetector():
 
         # Filter by Area.
         blobParams.filterByArea = True
-        blobParams.minArea = 2000   # minArea may be adjusted to suit for your experiment
+        blobParams.minArea = 100   # minArea may be adjusted to suit for your experiment
         blobParams.maxArea = 4500   # maxArea may be adjusted to suit for your experiment
 
         # Filter by Circularity
@@ -94,7 +94,7 @@ class BlobDetector():
         self.objp = np.zeros((55, 3), np.float32)
         index = 0
         for x in range(0, 11):
-            for y in range(0, 5):
+            for y in range(0, 4):
                 self.objp[index] = (x * 33, y * 33, 0)
                 index += 1
         ###################################################################################################
@@ -114,15 +114,14 @@ class BlobDetector():
 
     def detect(self, img):
         gray = self._verify_gray(img)
-        gray = cv.rotate(gray, cv.ROTATE_180)
         keypoints = self.blobDetector.detect(gray) # Detect blobs.
         im_with_keypoints = cv.drawKeypoints(gray, keypoints, np.array([]), (0,255,0), cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
         im_with_keypoints_gray = cv.cvtColor(im_with_keypoints, cv.COLOR_BGR2GRAY)
-        ret, corners = cv.findCirclesGrid(gray, (5,11), blobDetector = self.blobDetector, flags = cv.CALIB_CB_ASYMMETRIC_GRID)   # Find the circle grid
-        print(f'Number of keypoints: {len(keypoints)}')
+        ret, corners = cv.findCirclesGrid(gray, (5,11), blobDetector = self.blobDetector, flags = (cv.CALIB_CB_ASYMMETRIC_GRID + cv.CALIB_CB_CLUSTERING))
+        print(f'Number of keypoints: {len(keypoints)} findCirclesGrid ret: {ret}')
 
         if ret == True:
-            print('Found some corners (small miracle)')
+            print(f'Found corners: {len(corners)}')
             self.objpoints.append(self.objp)  # Certainly, every loop objp is the same, in 3D.
 
             corners2 = cv.cornerSubPix(im_with_keypoints_gray, corners, (11,11), (-1,-1), self.criteria)    # Refines the corner locations.
@@ -165,7 +164,8 @@ def main():
 
 
     def show(img, winname='img'):
-        small = cv.resize(img, (1280,720))
+        #small = cv.resize(img, (1280,720))
+        small = img
         cv.imshow(winname, small)
         return cv.waitKey(1)
 
@@ -190,6 +190,7 @@ def main():
 
         if update:
             update = False
+            img = cv.rotate(img, cv.ROTATE_180)
             drawimg = bd.detect(img)
             show(drawimg, 'blobs')
 
